@@ -17,6 +17,59 @@ It is running instance of image, we can create as many container from one image.
 7.  docker build -t sample-web-app:1.0.0 .   : To create image locally based on custom docker file
 8.  docker run --name sample-web-app-container -p 9000:80 sample-web-app:1.0.0   : Create container based on local image created 
 
+# Docker File instructions
+  ### FROM: The FROM command in a Dockerfile is the starting point of your image. It defines the base image on top of which your application is built. 
+          EX: FROM ubuntu:22.04
+          This means: It Use the Ubuntu OS image, Version/tag = 22.04
+
+  ### COPY: The COPY command in a Dockerfile is used to copy files or directories from your local system into the Docker image. syntax : COPY <source> <destination>
+          EX: COPY . /app
+          it Copies everything from current directory Into /app inside the container
+          COPY package.json /app/
+          Only copies one file.
+
+  ### WORKDIR: The WORKDIR command in a Dockerfile sets the working directory inside the container. All subsequent commands (RUN, COPY, CMD, etc.) will execute relative to this directory.
+          EX: WORKDIR /app
+          It Sets /app as the current directory, If it doesn’t exist → Docker creates it automatically
+
+  ### ARG: ARG (Build-time variable), Used only during image build.
+          EX: ARG VERSION=1.0
+              RUN echo $VERSION
+
+              It is Available only while building the image. NOT available in running container.
+              Can be overridden at build time: docker build --build-arg VERSION=2.0 .
+
+  ### ENV: ENV (Runtime environment variable). Used for both build time AND runtime.
+          EX: ENV APP_ENV=production
+              It is Available inside container at runtime. Can be accessed by application. It Persists in final image.
+
+  ### EXPOSE : The EXPOSE instruction in a Dockerfile is used to declare which ports your container listens on at runtime. 
+                EXPOSE does NOT actually publish the port.
+                It only Documents the port, Helps tools understand container networking
+                
+          EX: EXPOSE 80 : means Container intends to listen on port 80
+
+
+  ### RUN : The RUN instruction in a Dockerfile is used to execute commands during the image build process. It is primarily used to install packages, set up dependencies, and prepare the environment.
+            Each RUN creates a new layer:
+            RUN executes only at build time
+            NOT executed when container starts
+            For runtime commands → use CMD or ENTRYPOINT
+            
+          EX: FROM mcr.microsoft.com/dotnet/sdk:8.0
+              WORKDIR /src
+              COPY . .
+              
+              RUN dotnet restore
+              RUN dotnet build
+
+  ### ENTRYPOINT: The ENTRYPOINT instruction in a Dockerfile defines the main command that will always run when a container starts. Think of it as the fixed executable of your container.
+          EX: ENTRYPOINT ["echo", "Hello World"]
+          When container runs: output will be Hello World
+
+          ENTRYPOINT ["dotnet", "MyApp.dll"]
+          This means Container will always run your application, No need to specify command every time.
+          
 
 # How to host simple html page in docker container ?
 
