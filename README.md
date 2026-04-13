@@ -92,6 +92,11 @@ It is running instance of image, we can create as many container from one image.
           COPY --from=build /app .
           ENTRYPOINT ["dotnet", "HelloDockerApi.dll"]
 
+          Now run following command to create image from above docker file.
+          docker build -t mtestapp:1.0.0 .
+          Now run following command to create running container from above image.
+          docker run -p 8000:5000 -e DOTNET_URLS=http://+:5000 --name mtestapp-container mtestapp:1.0.0
+
 # Internal Execution Flow Of docker file instruction.
 
           For each instruction (like WORKDIR, RUN, COPY), Docker does:
