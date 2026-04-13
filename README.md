@@ -88,6 +88,7 @@ It is running instance of image, we can create as many container from one image.
           # Starts a completely new image
           FROM mcr.microsoft.com/dotnet/sdk:8.0 AS final
           WORKDIR /app
+          # Copy all file from app folder of build image in to current work directory which is app. but inside final image.
           COPY --from=build /app .
           ENTRYPOINT ["dotnet", "HelloDockerApi.dll"]
 
