@@ -14,7 +14,7 @@ It is running instance of image, we can create as many container from one image.
 4. Docker run image-name : it will create new instance of container based on image name provided.
 5. docker rmi 452a : This will delete image with matching id 452a
 6. Docker rm 324s : This will remove container with matching id 324s
-7.  docker build -t sample-web-app:1.0.0 .   : To create image locally based on custom docker file
+7.  docker build -t sample-web-app:1.0.0 .   : To create image locally based on custom docker file, it create Image + temporary containers (internal use) not running container like docker run do.
 8.  docker run --name sample-web-app-container -p 9000:80 sample-web-app:1.0.0   : Create container based on local image created 
 
 # Docker File instructions
@@ -69,7 +69,67 @@ It is running instance of image, we can create as many container from one image.
 
           ENTRYPOINT ["dotnet", "MyApp.dll"]
           This means Container will always run your application, No need to specify command every time.
+
+
+# How to create image for simple dotnet api project ?
+
+  ### sample docker file based on .net 8
+          FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+          WORKDIR /src
+          # following instruction csproj to src folder as it is the current working directory, then restore and publish the project
+          COPY ./HelloDockerApi.csproj ./
+          RUN dotnet restore "HelloDockerApi.csproj"
+          # After restore we are copying all files to the src folder and publish the project to the /app folder in the container
+          COPY . .
+          # publish the project to the /app folder in the container
+          RUN dotnet publish "HelloDockerApi.csproj" -c Release -o /app/
           
+          # After the build stage is complete, we are using the final image to run the application. We are copying the published files from the build stage to the final image and setting the entry point to run the                     application.
+          # Starts a completely new image
+          FROM mcr.microsoft.com/dotnet/sdk:8.0 AS final
+          WORKDIR /app
+          COPY --from=build /app .
+          ENTRYPOINT ["dotnet", "HelloDockerApi.dll"]
+
+# Internal Execution Flow Of docker file instruction.
+
+          For each instruction (like WORKDIR, RUN, COPY), Docker does:
+          
+          Takes previous image layer
+          Creates a temporary container from it
+          Executes the instruction inside that container
+          Commits the result as a new image layer
+          Deletes the temporary container
+
+          So specifically for WORKDIR /src
+
+          Internally:
+          
+          Docker creates a temporary container from previous layer
+          Inside that container:
+          Creates /src directory (if not exists)
+          Sets it as working directory metadata
+          Commits this as a new image layer
+          Removes the temporary container
+
+          Visualizing This
+          Step 1: FROM image
+                  ↓
+             [Image Layer 1]
+          
+          Step 2: WORKDIR /src
+                  ↓
+             (Temp Container created)
+                  ↓
+             mkdir /src
+             set WORKDIR
+                  ↓
+             (Commit layer)
+                  ↓
+             [Image Layer 2]
+                  ↓
+             (Temp container removed)
+
 
 # How to host simple html page in docker container ?
 
@@ -113,6 +173,8 @@ It is running instance of image, we can create as many container from one image.
 
           9000:80  : here 9000 is port of docker host env and 80 is port of container. we are doing port mapping . 
           Once above command ran successfully we can access out html using localhost:9000 .
+
+        
           
         
           
